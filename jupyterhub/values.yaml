@@ -36,6 +36,14 @@ hub:
     JupyterHub:
       admin_access: true
       authenticator_class: dummy
+      # Authenticator
+      Authenticator:
+        admin_users:
+          - user1
+          - user2
+      DummyAuthenticator:
+        password: Qweasd#123
+      # End Authenticator
   service:
     type: ClusterIP
     annotations: {}
@@ -67,9 +75,9 @@ hub:
       selector: {}
       accessModes:
         - ReadWriteOnce
-      storage: 1Gi
+      storage: 10Gi
       subPath:
-      storageClassName:
+      storageClassName: "efs-ducnt18-sc"
     url:
     password:
   labels: {}
@@ -84,7 +92,7 @@ hub:
   extraVolumeMounts: []
   image:
     name: jupyterhub/k8s-hub
-    tag: "set-by-chartpress"
+    tag: "3.0.2"
     pullPolicy:
     pullSecrets: []
   resources: {}
@@ -305,7 +313,7 @@ proxy:
       allowPrivilegeEscalation: false
     image:
       name: jupyterhub/k8s-secret-sync
-      tag: "set-by-chartpress"
+      tag: "3.0.2"
       pullPolicy:
       pullSecrets: []
     resources: {}
@@ -345,7 +353,7 @@ singleuser:
   networkTools:
     image:
       name: jupyterhub/k8s-network-tools
-      tag: "set-by-chartpress"
+      tag: "3.0.2"
       pullPolicy:
       pullSecrets: []
     resources: {}
@@ -391,13 +399,13 @@ singleuser:
     capacity: 10Gi
     homeMountPath: /home/jovyan
     dynamic:
-      storageClass:
+      storageClass: "efs-ducnt18-sc"
       pvcNameTemplate: claim-{username}{servername}
       volumeNameTemplate: volume-{username}{servername}
       storageAccessModes: [ReadWriteOnce]
   image:
-    name: jupyterhub/k8s-singleuser-sample
-    tag: "set-by-chartpress"
+    name: jupyter/scipy-notebook
+    tag: "lab-4.0.5"
     pullPolicy:
     pullSecrets: []
   startTimeout: 300
@@ -410,8 +418,8 @@ singleuser:
   extraResource:
     limits: {}
     guarantees: {}
-  cmd: jupyterhub-singleuser
-  defaultUrl:
+  cmd: null
+  defaultUrl: "/lab"
   extraPodConfig: {}
   profileList: []
 
@@ -519,7 +527,7 @@ scheduling:
       # here. We aim to stay around 1 minor version behind the latest k8s
       # version.
       #
-      tag: "v1.26.8" # ref: https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG
+      tag: "v1.26.7" # ref: https://github.com/kubernetes/kubernetes/tree/master/CHANGELOG
       pullPolicy:
       pullSecrets: []
     nodeSelector: {}
@@ -606,7 +614,7 @@ prePuller:
     # image and the configuration below relates to the hook-image-awaiter Job
     image:
       name: jupyterhub/k8s-image-awaiter
-      tag: "set-by-chartpress"
+      tag: "3.0.2"
       pullPolicy:
       pullSecrets: []
     containerSecurityContext:
@@ -672,3 +680,7 @@ debug:
 
 global:
   safeToShowValues: false
+
+# helm install -f ./jupyterhub/values.yaml jupyterhub jupyterhub/jupyterhub --namespace jupyterhub
+# kubectl --namespace=jupyterhub port-forward service/proxy-public 8080:http
+# helm uninstall jupyterhub -n jupyterhub
